@@ -6,13 +6,17 @@
 #include <string>
 #include <iomanip>
 
-#define MESSAGE_SIZE_LEN_BYTES 20
+#define FLOAT_WIDTH_PRECISION 20
+#define QUERY_DATA_SIZE 5
+
+// how long each message from volume servers is
+#define QUERY_RESPONSE_MESSAGE_LENGTH  FLOAT_WIDTH_PRECISION + QUERY_DATA_SIZE + 1
 
 typedef uint PortNum;
 typedef uint QueryKey;
-
-typedef uint QueryData;
 typedef uint QueryCounter;
+
+
 
 /**
  * Query should just contain the camera's x,y,and z positions.
@@ -45,18 +49,14 @@ struct Query
     
     void serialize(std::string& to_serialize_to)
     {
-        int width = 30;
         std::ostringstream str_stream;
         to_serialize_to = "";
-        str_stream << std::setw(width) << query_counter << " ";
-        str_stream << std::setw(width) << x << " " << std::setw(width) << y << " ";
-        str_stream << std::setw(width) << z << " ";
+        str_stream << std::setw(FLOAT_WIDTH_PRECISION) << query_counter << " ";
+        str_stream << std::setw(FLOAT_WIDTH_PRECISION) << x << " ";
+        str_stream << std::setw(FLOAT_WIDTH_PRECISION) << y << " ";
+        str_stream << std::setw(FLOAT_WIDTH_PRECISION) << z << " ";
 
         to_serialize_to = str_stream.str();
-
-        // ostringstream size_header_stream;
-        // size_header_stream << setw(MESSAGE_SIZE_LEN_BYTES) << to_serialize_to.size();
-        // size_header_stream <<" ";
     }
     
     static bool deserialize(Query& q, std::string& msg)
@@ -90,8 +90,37 @@ struct Query
 
 struct QueryResponse
 {
+    QueryResponse()
+    {}
+    ~QueryResponse()
+    {}
+
+    void serialize(std::string& to_serialize_to)
+    {
+        std::ostringstream str_stream;
+        to_serialize_to = "";
+        str_stream << std::setw(FLOAT_WIDTH_PRECISION) << query_counter << " ";        
+        to_serialize_to = str_stream.str();
+        to_serialize_to.append(query_data, QUERY_DATA_SIZE);
+    }
+
+    static bool deserialize(QueryResponse& q, std::string& msg)
+    {
+        if (msg.size() < QUERY_RESPONSE_MESSAGE_LENGTH)
+            return false;
+
+        q.query_counter = atof(msg.substr(0,FLOAT_WIDTH_PRECISION).c_str());
+        memcpy(
+            q.query_data,
+            msg.substr(FLOAT_WIDTH_PRECISION +1,QUERY_DATA_SIZE).c_str(),
+            QUERY_DATA_SIZE);
+
+        msg = msg.substr(QUERY_RESPONSE_MESSAGE_LENGTH );
+        return true;
+    }
+
     QueryCounter query_counter;
-    QueryData query_data;
+    char query_data [QUERY_DATA_SIZE];
 };
 
 
