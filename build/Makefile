@@ -1,13 +1,26 @@
 COMPILER= g++
 FLAGS= -Wall -g -std=c++0x 
-#LIBS= -I/usr/local/include/
 LIBS= -lpthread -lboost_system -lboost_thread
 DEPS= ../lib/util.hpp
-PROGRAMS= 
+PROGRAMS= serialize_tests server_connection_test
 SOS=/usr/lib/libboost_regex.so
 
-serialize_tests: ../test/serialize_tests.cpp ../lib/util.hpp $(SOS)
-	$(COMPILER) -o serialize_tests ../test/serialize_tests.cpp $(SOS)
+# for each .cpp file (or any change to DEPS), create a .o
+# file -c: generate the object file.  -o: put the object file in the
+# file named $@, which is the file on the left hand side of :
+%.o: ../lib/%.cpp $(DEPS)
+	$(COMPILER) -c -o $@ $< $(FLAGS) $(LIBS) 
+%.o: ../master/%.cpp $(DEPS)
+	$(COMPILER) -c -o $@ $< $(FLAGS) $(LIBS) 
+%.o: ../test/%.cpp $(DEPS)
+	$(COMPILER) -c -o $@ $< $(FLAGS) $(LIBS) 
 
-server_connection_test: ../master/master.cpp ../master/connection.cpp ../test/server_connection_test.cpp
-	$(COMPILER) -o server_connection_test ../test/server_connection_test.cpp ../master/master.cpp ../master/connection.cpp $(LIBS) $(SOS)
+serialize_tests: serialize_tests.o $(DEPS)
+	$(COMPILER) -o $@ $^ $(FLAGS) $(LIBS) $(SOS)
+
+server_connection_test: master.o connection.o server_connection_test.o $(DEPS)
+	$(COMPILER) -o $@ $^ $(FLAGS) $(LIBS) $(SOS)
+
+.PHONY : clean
+clean :
+	rm -f *.o $(PROGRAMS)
