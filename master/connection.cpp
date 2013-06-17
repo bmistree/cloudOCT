@@ -57,7 +57,12 @@ bool Connection::match_parts(
 
 void Connection::listen_for_queries()
 {
-    std::string msg_result ("Result");
+    std::string msg_result (
+        std::string("HTTP/1.1 200 OK \r\n") +
+        std::string("Content-Type: text/html \r\n") +
+        std::string("Content-Length: 5 \r\n\r\n") + 
+        std::string("Hello"));
+    
     while (true)
     {
         boost::asio::streambuf request;
@@ -85,6 +90,7 @@ void Connection::listen_for_queries()
         {
             // FIXME: actually should handle malformed requests
             std::cout<<"\nIncorrect http request!\n\n";
+            std::cout<<http_request_msg<<"\n\n";
         }
     }
 }
