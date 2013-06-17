@@ -29,7 +29,7 @@ struct Query
         query_counter = q_count ++;
     }
     ~Query() {}
-    
+
     // used to distinguish which query replying to.
     QueryCounter query_counter;
     // position of the camera.
@@ -119,6 +119,13 @@ struct QueryResponse
         return true;
     }
 
+    void merge_query_data_into_me(const QueryResponse& to_merge_with)
+    {
+        // FIXME: should actually do useful work.
+        for (int index = 0; index < QUERY_DATA_SIZE; ++index)
+            query_data[index] += to_merge_with.query_data[index];
+    }
+    
     QueryCounter query_counter;
     char query_data [QUERY_DATA_SIZE];
 };
