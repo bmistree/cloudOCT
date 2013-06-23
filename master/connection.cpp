@@ -61,23 +61,17 @@ bool Connection::match_parts(
 
 void Connection::query_response(QueryResponse* query_response)
 {
+    std::vector<unsigned char> png_dat;
+    if (! query_response->to_png(png_dat))
+        assert(false);
+
     std::string msg_result (
-        std::string("HTTP/1.1 200 OK \r\n") +
-        std::string("Content-Type: text/html \r\n") +
-        std::string("Content-Length: 5 \r\n\r\n") + 
-        std::string("Hello"));
-
-    // std::stringstream string_stream;
-    // string_stream << QUERY_DATA_SIZE;
-    // std::string q_datasize_string = string_stream.str();
-    
-
-    // std::string msg_result (
-    //     std::string("HTTP/1.1 200 OK \r\n") +
-    //     std::string("Content-Type: text/html \r\n") +
-    //     std::string("Content-Length: ") +
-    //     q_datasize_string + 
-    //     std::string(" \r\n\r\n"));
+        "HTTP/1.1 200 OK \r\n"
+        "Content-Type: image/png \r\n"
+        "Content-Length: ");
+    msg_result += boost::lexical_cast<std::string>(png_dat.size());
+    msg_result += " \r\n\r\n";
+    msg_result.append(png_dat.begin(),png_dat.end());
 
     boost::system::error_code ignored_error;
     boost::asio::write(

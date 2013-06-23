@@ -169,6 +169,7 @@ struct QueryResponse
             query_data[index] += to_merge_with.query_data[index];
     }
 
+    // Returns true if successfully decoded, false otherwise.
     bool to_png(std::vector<unsigned char>& png_dat)
     {
         std::vector<unsigned char> bmp_dat;
@@ -176,7 +177,7 @@ struct QueryResponse
             bmp_dat.push_back(query_data[index]);
 
         unsigned error = lodepng::encode(png_dat, bmp_dat, IMAGE_WIDTH, IMAGE_HEIGHT);
-        return error;
+        return ! error;
     }
 
     QueryKey query_key;
