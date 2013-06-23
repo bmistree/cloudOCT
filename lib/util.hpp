@@ -7,6 +7,9 @@
 #include <iomanip>
 #include <vector>
 
+#include <stdlib.h>
+#include <time.h> 
+
 #include "../deps/lodepng/lodepng.h"
 
 #define FLOAT_WIDTH_PRECISION 20
@@ -18,6 +21,7 @@
 // data required for each pixel.
 #define QUERY_DATA_SIZE IMAGE_WIDTH*IMAGE_HEIGHT*RGBA_PIXEL_BYTES
 
+
 // how long each message from volume servers is
 #define QUERY_RESPONSE_MESSAGE_LENGTH  2*FLOAT_WIDTH_PRECISION + QUERY_DATA_SIZE + 2
 
@@ -26,6 +30,7 @@ typedef uint PortNum;
 typedef uint QueryKey;
 typedef uint QueryCounter;
 
+typedef uint ConnectionId;
 
 
 /**
@@ -61,7 +66,7 @@ struct Query
     }
     
     
-    void serialize(std::string& to_serialize_to)
+    void serialize(std::string& to_serialize_to) const
     {
         std::ostringstream str_stream;
         to_serialize_to = "";
@@ -112,7 +117,24 @@ struct QueryResponse
     ~QueryResponse()
     {}
 
-    void serialize(std::string& to_serialize_to)
+
+    // Provides a randomly-generated result image for debugging.
+    static QueryResponse* noise_query_response(
+        QueryKey query_key, QueryCounter query_counter)
+    {
+        QueryResponse * to_return = new QueryResponse();
+        to_return->query_key = query_key;
+        to_return->query_counter = query_counter;
+
+        for (int query_data_index = 0; query_data_index < QUERY_DATA_SIZE;
+             ++query_data_index)
+        {
+            to_return->query_data[query_data_index] = rand() % 256;
+        }
+        return to_return;
+    }
+    
+    void serialize(std::string& to_serialize_to) const
     {
         std::ostringstream str_stream;
         to_serialize_to = "";

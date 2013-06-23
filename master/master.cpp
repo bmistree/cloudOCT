@@ -8,9 +8,10 @@ Master::Master(
     io_service = _io_service;
     connection_port_num = query_port;
 
-    boost::thread* query_listening_thread = 
-        new boost::thread(
+    boost::thread query_listening_thread = 
+        boost::thread(
             boost::bind(&Master::listen_for_new_connections,this));
+    query_listening_thread.detach();
 }
 
 
@@ -28,7 +29,7 @@ void Master::listen_for_new_connections()
         acceptor.accept(*socket);
         {
             boost::mutex::scoped_lock lock(conn_map_mutex);
-            Connection* external_connection = new Connection(socket,this,conn_id);
+            Connection* external_connection = new Connection(socket,query_manager,conn_id);
             connection_map[conn_id] = external_connection;
         }
     }

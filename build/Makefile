@@ -4,6 +4,7 @@ LIBS= -lpthread -lboost_system -lboost_thread
 DEPS= ../lib/util.hpp
 PROGRAMS= serialize_tests server_connection_test
 SOS=/usr/lib/libboost_regex.so
+# SOS=/usr/lib/libboost_regex.so.1.46.1
 
 # for each .cpp file (or any change to DEPS), create a .o
 # file -c: generate the object file.  -o: put the object file in the
@@ -14,11 +15,13 @@ SOS=/usr/lib/libboost_regex.so
 	$(COMPILER) -c -o $@ $< $(FLAGS) $(LIBS) 
 %.o: ../test/%.cpp $(DEPS)
 	$(COMPILER) -c -o $@ $< $(FLAGS) $(LIBS) 
+%.o: ../volume_server/%.cpp $(DEPS)
+	$(COMPILER) -c -o $@ $< $(FLAGS) $(LIBS) 
 
 serialize_tests: serialize_tests.o $(DEPS)
 	$(COMPILER) -o $@ $^ $(FLAGS) $(LIBS) $(SOS)
 
-server_connection_test: master.o connection.o server_connection_test.o $(DEPS)
+server_connection_test: master.o connection.o server_connection_test.o volume_server.o connection.o query_group.o query_manager.o query_connection.o $(DEPS)
 	$(COMPILER) -o $@ $^ $(FLAGS) $(LIBS) $(SOS)
 
 .PHONY : clean

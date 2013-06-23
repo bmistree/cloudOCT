@@ -4,9 +4,8 @@
 #include "../lib/util.hpp"
 #include "connection.hpp"
 #include <boost/thread.hpp>
+#include "query_manager.hpp"
 
-// FIXME: eventually, should remove
-typedef uint QueryManager;
 
 class Master
 {
@@ -15,6 +14,7 @@ public:
         boost::asio::io_service* _io_service,PortNum query_port,
         QueryManager* q_manager);
     ~Master();
+
     
 private:
     void listen_for_new_connections();
@@ -25,8 +25,6 @@ private:
     QueryManager* query_manager;
 
     PortNum connection_port_num;
-    
-    boost::thread* query_listening_thread;
     boost::asio::io_service* io_service;
 
     ConnMap connection_map;
