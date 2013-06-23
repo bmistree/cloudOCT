@@ -10,7 +10,8 @@
 const PortNum MASTER_CONNECTION_PORT = 5020;
 const QueryKey QUERY_KEY = 1;
 
-const PortNum VOLUME_SERVER_PORT = 4390;
+const PortNum VOLUME_SERVER_PORT_1 = 4390;
+const PortNum VOLUME_SERVER_PORT_2 = 4391;
 
 void setup_volume_servers(boost::asio::io_service* io_service,AllConnInfoMap);
 void setup_master_server(boost::asio::io_service* io_service,AllConnInfoMap);
@@ -45,8 +46,14 @@ void setup_dummy_conn_info(AllConnInfoMap& all_conn_info_map)
     all_conn_info_map[QUERY_KEY].push_back(
         VolumeServerConnInfo(
             QUERY_KEY,
-            VOLUME_SERVER_PORT,
+            VOLUME_SERVER_PORT_1,
             boost::asio::ip::address::from_string("127.0.0.1")));
+    
+    all_conn_info_map[QUERY_KEY].push_back(
+        VolumeServerConnInfo(
+            QUERY_KEY,
+            VOLUME_SERVER_PORT_2,
+            boost::asio::ip::address::from_string("127.0.0.1")));    
 }
 
 
