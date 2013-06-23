@@ -3,6 +3,7 @@
 
 #include <sstream>
 #include <boost/regex.hpp>
+#include <boost/thread.hpp>
 #include <string>
 #include <iomanip>
 #include <vector>
@@ -21,9 +22,6 @@
 // data required for each pixel.
 #define QUERY_DATA_SIZE IMAGE_WIDTH*IMAGE_HEIGHT*RGBA_PIXEL_BYTES
 
-
-// how long each message from volume servers is
-#define QUERY_RESPONSE_MESSAGE_LENGTH  2*FLOAT_WIDTH_PRECISION + QUERY_DATA_SIZE + 2
 
 
 typedef uint PortNum;
@@ -129,7 +127,7 @@ struct QueryResponse
         for (int query_data_index = 0; query_data_index < QUERY_DATA_SIZE;
              ++query_data_index)
         {
-            to_return->query_data[query_data_index] = rand() % 256;
+            to_return->bmp_dat.push_back(rand() % 256);
         }
         return to_return;
     }
@@ -138,51 +136,82 @@ struct QueryResponse
     {
         std::ostringstream str_stream;
         to_serialize_to = "";
+
+        std::vector<unsigned char> png_dat;
+        unsigned error = lodepng::encode(png_dat, bmp_dat, IMAGE_WIDTH, IMAGE_HEIGHT);
+        if (error)
+            assert(false);
+
+        int msg_size = (3 * FLOAT_WIDTH_PRECISION) + 3 + png_dat.size();
+        str_stream << std::setw(FLOAT_WIDTH_PRECISION) << msg_size <<" ";
         str_stream << std::setw(FLOAT_WIDTH_PRECISION) << query_key << " ";        
         str_stream << std::setw(FLOAT_WIDTH_PRECISION) << query_counter << " ";
         to_serialize_to = str_stream.str();
-        to_serialize_to.append(query_data, QUERY_DATA_SIZE);
+        to_serialize_to.append(png_dat.begin(),png_dat.end());
     }
 
     static bool deserialize(QueryResponse& q, std::string& msg)
     {
-        if (msg.size() < QUERY_RESPONSE_MESSAGE_LENGTH)
+        if (msg.size() < FLOAT_WIDTH_PRECISION)
             return false;
 
-        q.query_key = atoi(msg.substr(0,FLOAT_WIDTH_PRECISION).c_str());
-        q.query_counter = atoi(
-            msg.substr(FLOAT_WIDTH_PRECISION + 1, 2*FLOAT_WIDTH_PRECISION).c_str());
-        
-        memcpy(
-            q.query_data,
-            msg.substr(2*FLOAT_WIDTH_PRECISION +1,QUERY_DATA_SIZE).c_str(),
-            QUERY_DATA_SIZE);
+        uint msg_size = atoi(msg.substr(0,FLOAT_WIDTH_PRECISION).c_str());
+        if (msg_size > msg.size())
+            return false;
 
-        msg = msg.substr(QUERY_RESPONSE_MESSAGE_LENGTH );
+        q.query_key = atoi(
+            msg.substr(FLOAT_WIDTH_PRECISION + 1, 2*FLOAT_WIDTH_PRECISION).c_str());
+        q.query_counter = atoi(
+            msg.substr(2*(FLOAT_WIDTH_PRECISION + 1), 3*FLOAT_WIDTH_PRECISION).c_str());
+
+        uint png_size = msg_size - 3*(FLOAT_WIDTH_PRECISION+1);
+        std::vector<uint8_t> png_dat;
+        uint base_start = 3*(FLOAT_WIDTH_PRECISION + 1);
+        for (uint index= base_start; index < (base_start + png_size); ++index)
+            png_dat.push_back(msg[index]);
+
+        uint garbage_width, garbage_height;
+        unsigned error = lodepng::decode(q.bmp_dat, garbage_width,garbage_height, png_dat);
+        
+        if (error)
+            assert(false);
+
+        msg = msg.substr( msg_size );
         return true;
     }
 
     void merge_query_data_into_me(const QueryResponse& to_merge_with)
     {
+        // only concurrent operations are merging data into self
+        boost::mutex::scoped_lock lock (merge_mutex);
+        
         // FIXME: should actually do useful work.
-        for (int index = 0; index < QUERY_DATA_SIZE; ++index)
-            query_data[index] += to_merge_with.query_data[index];
+        if (bmp_dat.size() == 0)
+        {
+            for (uint index = 0; index < QUERY_DATA_SIZE; ++index)
+                bmp_dat.push_back(to_merge_with.bmp_dat[index]);
+        }
+        else
+        {
+            for (uint index = 0; index < bmp_dat.size(); ++index)
+                bmp_dat[index] += to_merge_with.bmp_dat[index];
+        }
     }
 
     // Returns true if successfully decoded, false otherwise.
     bool to_png(std::vector<unsigned char>& png_dat)
     {
-        std::vector<unsigned char> bmp_dat;
-        for (int index = 0; index < QUERY_DATA_SIZE; ++index)
-            bmp_dat.push_back(query_data[index]);
-
         unsigned error = lodepng::encode(png_dat, bmp_dat, IMAGE_WIDTH, IMAGE_HEIGHT);
+        if (error)
+            assert(false);
+        
         return ! error;
     }
 
     QueryKey query_key;
     QueryCounter query_counter;
-    char query_data [QUERY_DATA_SIZE];
+    std::vector<uint8_t>bmp_dat;
+    boost::mutex merge_mutex;
 };
 
 

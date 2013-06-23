@@ -202,6 +202,7 @@ unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h,
 unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h,
                 const std::vector<unsigned char>& in,
                 LodePNGColorType colortype = LCT_RGBA, unsigned bitdepth = 8);
+
 #ifdef LODEPNG_COMPILE_DISK
 /*
 Converts PNG file from disk to raw pixel data in memory.

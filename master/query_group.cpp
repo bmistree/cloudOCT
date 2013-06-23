@@ -46,7 +46,7 @@ void QueryGroup::query_response(QueryResponse* query_response)
 
     // incorporate response into full response
     outstanding_query->qr->merge_query_data_into_me(*query_response);
-
+    
     // free existing query response
     delete query_response;
 

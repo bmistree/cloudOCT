@@ -25,7 +25,7 @@ $(PNG_DEP_FOLDER)/%.o: $(PNG_DEP_FOLDER)/%.cpp
 	$(COMPILER) -c -o $@ $< $(FLAGS) $(LIBS) 
 
 
-serialize_tests: serialize_tests.o $(DEPS)
+serialize_tests: serialize_tests.o $(PNG_DEP_FOLDER)/lodepng.o $(DEPS)
 	$(COMPILER) -o $@ $^ $(FLAGS) $(LIBS) $(SOS)
 
 server_connection_test: master.o connection.o server_connection_test.o volume_server.o connection.o query_group.o query_manager.o query_connection.o $(PNG_DEP_FOLDER)/lodepng.o $(DEPS)

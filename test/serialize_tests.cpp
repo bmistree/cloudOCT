@@ -14,17 +14,13 @@ int main(int argc, char** argv)
 
 void test_query_response_serialize()
 {
-    QueryResponse qr1,qr2;
-    qr1.query_counter = 1;
-    qr1.query_key = 1;
-    strncpy(qr1.query_data,"hello",5);
-    qr2.query_counter = 3;
-    qr2.query_key = 5;
-    strncpy(qr2.query_data,"other",5);
+    QueryResponse* qr1 = QueryResponse::noise_query_response(1,20);
+    QueryResponse* qr2 = QueryResponse::noise_query_response(13,120);
+
     
     std::string serialized,other;
-    qr1.serialize(serialized);
-    qr2.serialize(other);
+    qr1->serialize(serialized);
+    qr2->serialize(other);
     serialized += other;
 
     QueryResponse dqr1,dqr2,dqr3;
@@ -34,6 +30,11 @@ void test_query_response_serialize()
     if (! QueryResponse::deserialize(dqr2,serialized))
         assert(false);
 
+    if (dqr1.bmp_dat != qr1->bmp_dat)
+        assert(false);
+    if (dqr2.bmp_dat != qr2->bmp_dat)
+        assert(false);
+    
     if (QueryResponse::deserialize(dqr3,serialized))
         assert(false);
 }
